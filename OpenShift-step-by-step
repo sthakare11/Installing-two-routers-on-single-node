@@ -1,0 +1,45 @@
+1.Checking cluster version:
+
+[devOps@master1 ~]# oc version
+oc v3.11.157
+kubernetes v1.11.0+d4cacc0
+features: Basic-Auth GSSAPI Kerberos SPNEGO
+
+
+2. Checking default pods,
+
+[devOps@master1 ~]# oc get pods
+NAME                       READY     STATUS    RESTARTS   AGE
+docker-registry-1-9xg5t    1/1       Running   25         18d
+registry-console-1-5lnfv   1/1       Running   0          1h
+router-4-2c8jd             1/1       Running   3          11d
+
+3.creating router,
+
+[devOps@master1 ~]# oc adm router router-b --replicas=1 --ports='8080:8080,8443:8443'  --selector="node-role.kubernetes.io/infra=true" --stats-port=2936 
+info: password for stats user admin has been set to QiLyjrHxX6
+--> Creating router router-b ...
+    warning: serviceaccounts "router" already exists
+    warning: clusterrolebindings.authorization.openshift.io "router-router-b-role" already exists
+    deploymentconfig.apps.openshift.io "router-b" created
+    service "router-b" created
+--> Success
+
+4. Setting up environmental variables
+// basically changing the ports to avoid the port conflict
+
+[devOps@master1 ~]# oc set env dc/router-b ROUTER_SERVICE_NO_SNI_PORT=11443 ROUTER_SERVICE_SNI_PORT=11444     ROUTER_SERVICE_HTTPS_PORT=8443 ROUTER_SERVICE_HTTP_PORT=8080 STATS_PORT=2936
+deploymentconfig.apps.openshift.io/router-b updated
+
+
+5. Checking the status of new router,
+
+[devOps@master1 ~]# oc get pods
+NAME                       READY     STATUS    RESTARTS   AGE
+docker-registry-1-9xg5t    1/1       Running   25         18d
+registry-console-1-5lnfv   1/1       Running   0          1h
+router-4-2c8jd             1/1       Running   3          11d
+router-b-2-2nv9q           1/1       Running   0          26s
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
